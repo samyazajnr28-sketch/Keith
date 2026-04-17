@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           # We removed the 'cache' line because you don't have a lock file yet
 
       - name: Install Dependencies

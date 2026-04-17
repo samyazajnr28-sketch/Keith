@@ -1,42 +1,40 @@
-name: Keith Bot CI/CD
+name: build-and-deploy
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          # We remove 'cache' and 'cache-dependency-path' to avoid the 
+          # "lock file not found" error if they don't exist yet.
 
       - name: Install Dependencies
-        run: npm install
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
 
-      - name: Deploy to Server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            # Navigate to project directory
-            cd ~/Keith 
-            
-            # Update code
-            git pull origin main
-            
-            # Install any new dependencies
-            npm install --production
-            
-            # Restart the bot using PM2
-            pm2 restart all || pm2 start index.js --name "keith"
+      - name: Build Project
+        run: npm run build --if-present
+
+      - name: Test Project
+        run: npm test --if-present
+        
+      # Add your specific deployment steps below (e.g., to Heroku, Vercel, or Docker)
+
 
